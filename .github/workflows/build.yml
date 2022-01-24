@@ -24,7 +24,7 @@ jobs:
           fi
 
       - name: Build
-        run: go build -mod=readonly -v cmd/autorclone/main.go -o autorclone
+        run: go build -mod=readonly -v -o autorclone cmd/autorclone/main.go
 
       - name: Test
         run: go test -mod=readonly -v .
