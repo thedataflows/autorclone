@@ -16,7 +16,7 @@ Autorclone is a wrapper over [rclone](https://rclone.org/) attempting to automat
 `autorclone -h`
 
 ```ini
-Usage: autorclone.exe <command>
+Usage: autorclone <command>
 
 Flags:
   -h, --help                    Show context-sensitive help.
@@ -36,7 +36,7 @@ Commands:
   daemon
     Run as a background program, executing schelduled jobs
 
-Run "autorclone.exe <command> --help" for more information on a command.
+Run "autorclone <command> --help" for more information on a command.
 ```
 
 ## License

@@ -2,36 +2,18 @@ package autorclone
 
 import (
 	"fmt"
-	"os"
 
 	log "github.com/sirupsen/logrus"
 )
 
-// isDirectory determines if a file represented
-// by `path` is a directory or not
-func isDirectory(path string) error {
-	fileInfo, err := os.Stat(path)
-	if err != nil {
-		return err
-	}
-	if !fileInfo.IsDir() {
-		return fmt.Errorf("%s is not a directory", path)
-	}
-	return nil
-}
-
 // UploadT defines upload arguments
 type UploadT struct {
-	SourceDirectory string   `arg:"" help:"Local directory to be used as a source" type:"path"`
-	Destinations    []string `arg:"" name:"destination1 [destination2] [...]" help:"Space separated rclone remotes or local directories"`
+	Source       string   `arg:"" help:"source (rclone config or local directory/file)"`
+	Destinations []string `arg:"" name:"destination1 [destination2] [...]" help:"Space separated rclone remotes or local directories"`
 }
 
 // Run executes the 'upload' command after validations
 func (u *UploadT) Run(logger *log.Logger) error {
-	err := isDirectory(u.SourceDirectory)
-	if err != nil {
-		return err
-	}
 	return RunBatchRclone(u, logger)
 }
 
@@ -42,6 +24,7 @@ type DaemonT struct {
 
 // Run executes the 'daemon' command to place autorclone in background
 func (u *DaemonT) Run() error {
+	// TODO: implement running as daemon
 	return fmt.Errorf("not implemented yet: running as daemon")
 }
 
