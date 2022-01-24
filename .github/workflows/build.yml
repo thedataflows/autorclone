@@ -27,7 +27,7 @@ jobs:
         run: go build -mod=readonly -v -o autorclone cmd/autorclone/main.go
 
       - name: Test
-        run: go test -mod=readonly -v .
+        run: go test -mod=readonly -v cmd/autorclone/main.go
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v2
