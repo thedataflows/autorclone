@@ -1,4 +1,4 @@
-project_name: ebook-server
+project_name: autorclone
 builds:
   - env:
       - CGO_ENABLED=0
@@ -13,8 +13,7 @@ builds:
       - -mod=readonly
     ldflags:
       - -X=main.version={{.Tag}}
-    build:
-      main: ./cmd/autorclone/main.go
+    main: ./cmd/autorclone/main.go
 checksum:
   name_template: 'sha256sums.txt'
   algorithm: sha256
