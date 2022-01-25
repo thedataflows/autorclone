@@ -5,7 +5,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/go-cmd/cmd"
 	ps "github.com/mitchellh/go-ps"
 	log "github.com/sirupsen/logrus"
 )
@@ -47,25 +49,50 @@ func RunIndividualRclone(source string, destination string, logger *log.Logger) 
 	}
 	args = append(args, source)
 	args = append(args, destination)
-	cmd := exec.Command(rclonePath, args...)
-	stdOut := new(strings.Builder)
-	cmd.Stdout = stdOut
-	stdErr := new(strings.Builder)
-	cmd.Stderr = stdErr
-	logger.Infof("COMMAND: %s\n", cmd)
-	// Run rclone
-	errRun := cmd.Run()
-	if errRun != nil {
-		return false, fmt.Errorf("\n%s\n%s", stdErr.String(), errRun)
+	// Init command
+	rcloneCmd := cmd.NewCmdOptions(cmd.Options{
+		Buffered:  false,
+		Streaming: true,
+	}, rclonePath, args...)
+	logger.Infof("COMMAND: %s %s", rcloneCmd.Name, strings.Join(rcloneCmd.Args, " "))
+	// Print STDOUT and STDERR lines streaming from Cmd
+	doneChan := make(chan struct{})
+	go func() {
+		defer close(doneChan)
+		// Done when both channels have been closed
+		// https://dave.cheney.net/2013/04/30/curious-channels
+		for rcloneCmd.Stdout != nil || rcloneCmd.Stderr != nil {
+			select {
+			case line, open := <-rcloneCmd.Stdout:
+				if !open {
+					rcloneCmd.Stdout = nil
+					continue
+				}
+				logger.Println(line)
+			case line, open := <-rcloneCmd.Stderr:
+				if !open {
+					rcloneCmd.Stderr = nil
+					continue
+				}
+				logger.Println(line)
+			}
+		}
+	}()
+	// Stop command after specified timeout
+	go func() {
+		<-time.After(CLI.JobTimeout)
+		rcloneCmd.Stop()
+		logger.Errorf("Timeout running job after %v", CLI.JobTimeout)
+	}()
+
+	// Run and wait for Cmd to return, discard Status
+	statusChan := <-rcloneCmd.Start()
+	<-doneChan
+	if statusChan.Exit > 0 {
+		return false, fmt.Errorf("rclone terminated with code %v", statusChan.Exit)
+	} else {
+		return true, nil
 	}
-	logger.Infof("PID: %v\n", cmd.ProcessState.Pid())
-	if stdOut.Len() > 0 {
-		logger.Info("STDOUT:\n%s", stdOut.String())
-	}
-	if stdErr.Len() > 0 {
-		logger.Infof("STDERR:\n%s", stdErr.String())
-	}
-	return true, nil
 }
 
 // ProcessRunning returns the PID of a running process matched by image name
