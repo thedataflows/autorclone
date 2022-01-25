@@ -11,7 +11,7 @@ import (
 )
 
 // RunBatchRclone attempts to execute rclone in batch mode
-func RunBatchRclone(u *UploadT, logger *log.Logger) error {
+func RunBatchRclone(u *SourceDestT, logger *log.Logger) error {
 	failedTasks := 0
 	for _, dest := range u.Destinations {
 		// TODO: improve this, perhaps paralelize?
@@ -42,6 +42,9 @@ func RunIndividualRclone(source string, destination string, logger *log.Logger) 
 	}
 	// Setup arguments
 	args := strings.Split(CLI.RcloneSyncArgs, " ")
+	if CLI.BackupSuffix != "" {
+		args = append(args, "--suffix", "."+CLI.BackupSuffix, "--exclude", "*."+CLI.BackupSuffix)
+	}
 	args = append(args, source)
 	args = append(args, destination)
 	cmd := exec.Command(rclonePath, args...)

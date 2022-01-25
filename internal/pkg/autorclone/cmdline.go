@@ -6,14 +6,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// UploadT defines upload arguments
-type UploadT struct {
-	Source       string   `arg:"" help:"source (rclone config or local directory/file)"`
-	Destinations []string `arg:"" name:"destination1 [destination2] [...]" help:"Space separated rclone remotes or local directories"`
+// SourceDestT defines source and destinations
+type SourceDestT struct {
+	Source       string   `arg:"" help:"source (rclone pre-configured remote or local directory/file)"`
+	Destinations []string `arg:"" name:"destination1 [destination2] [...]" help:"Space separated rclone pre-configured remotes or local directories"`
 }
 
 // Run executes the 'upload' command after validations
-func (u *UploadT) Run(logger *log.Logger) error {
+func (u *SourceDestT) Run(logger *log.Logger) error {
 	return RunBatchRclone(u, logger)
 }
 
@@ -33,9 +33,10 @@ var CLI struct {
 	LogLevel log.Level `help:"Set log level to one of: panic, fatal, error, warn, info, debug, trace" default:"${defaultLogLevel}"`
 
 	RclonePath     string `optional:"" help:"Path to rclone binary, if empty will use rclone from PATH env" default:"rclone"`
-	RcloneSyncArgs string `optional:"" help:"Rclone default sync arguments" env:"AUTO_RCLONE_SYNC_ARGS" default:"-v --min-size 0.001 --multi-thread-streams 0 --retries 1 --human-readable --track-renames --log-format shortfile sync"`
+	RcloneSyncArgs string `optional:"" help:"Rclone default sync arguments" env:"AUTO_RCLONE_SYNC_ARGS" default:"sync -v --min-size 0.001 --multi-thread-streams 0 --retries 1 --human-readable --track-renames --links --log-format shortfile"`
+	BackupSuffix   string `help:"Backs up files with specified .suffix before deleting or replacing them. Existing backups will be overwritten. Set to empty to disable backup" default:"rclonebak"`
 
-	Upload UploadT `cmd:"" help:"Synchronize source to rclone remote destination(s). Use 'rclone config show' to list them."`
+	Sync SourceDestT `cmd:"" help:"Synchronize source to rclone destination(s). Use 'rclone config show' to list them."`
 
 	Daemon DaemonT `cmd:"" help:"Run as a background program, executing schelduled jobs"`
 }
