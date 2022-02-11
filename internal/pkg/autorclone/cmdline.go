@@ -34,7 +34,7 @@ var CLI struct {
 	LogLevel log.Level `help:"Set log level to one of: panic, fatal, error, warn, info, debug, trace" default:"${defaultLogLevel}"`
 
 	RclonePath     string        `optional:"" help:"Path to rclone binary, by default will try rclone from PATH env" default:"rclone"`
-	RcloneSyncArgs string        `optional:"" help:"Rclone default sync arguments" env:"AUTO_RCLONE_SYNC_ARGS" default:"sync -v --min-size 0.001 --multi-thread-streams 0 --retries 1 --human-readable --track-renames --links --log-format shortfile"`
+	RcloneSyncArgs string        `optional:"" help:"Rclone default sync arguments" env:"AUTO_RCLONE_SYNC_ARGS" default:"sync -v --min-size 0.001 --multi-thread-streams 0 --retries 1 --human-readable --track-renames --links --ignore-errors --log-format shortfile"`
 	BackupSuffix   string        `help:"Backs up files with specified .suffix before deleting or replacing them. Existing backups will be overwritten. Set to empty to disable backup" default:"rclonebak"`
 	JobTimeout     time.Duration `help:"Job timeout. Will terminate rclone after expired time" default:"10m"`
 
