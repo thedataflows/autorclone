@@ -5,14 +5,12 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
 
 	"dataflows.com/autorclone/internal/pkg/utils"
 	"github.com/go-cmd/cmd"
-	ps "github.com/mitchellh/go-ps"
 )
 
 // RunBatchRclone attempts to execute rclone in batch mode
@@ -46,14 +44,6 @@ func RunBatchRclone(u *SourceDestT) error {
 
 // RunIndividualRclone attempts to execute an instance of rclone
 func RunIndividualRclone(rclonePath string, source string, destination string) (bool, error) {
-	// Check if rclone is already running
-	pid, errProcRunning := ProcessRunning(rclonePath)
-	if errProcRunning != nil {
-		return false, errProcRunning
-	}
-	if pid > 0 {
-		return false, fmt.Errorf("'%s' is already running with PID '%v'", rclonePath, pid)
-	}
 	// Setup arguments
 	args := strings.Split(CLI.RcloneSyncArgs, " ")
 	if CLI.BackupSuffix != "" {
@@ -66,7 +56,16 @@ func RunIndividualRclone(rclonePath string, source string, destination string) (
 		Buffered:  false,
 		Streaming: true,
 	}, rclonePath, args...)
-	Logger.Infof("COMMAND: %s %s", rcloneCmd.Name, strings.Join(rcloneCmd.Args, " "))
+	commandLine := strings.Join(rcloneCmd.Args, " ")
+	Logger.Infof("COMMAND: %s %s", rcloneCmd.Name, commandLine)
+	// Check if rclone is already running
+	pid, errIsProcessRunning := utils.IsProcessRunning(rcloneCmd.Name, commandLine)
+	if errIsProcessRunning != nil {
+		return false, errIsProcessRunning
+	}
+	if pid > 0 {
+		return false, fmt.Errorf("'%s %s' is already running with PID '%v'", rcloneCmd.Name, commandLine, pid)
+	}
 	// Print STDOUT and STDERR lines streaming from Cmd
 	doneChan := make(chan struct{})
 	go func() {
@@ -105,22 +104,6 @@ func RunIndividualRclone(rclonePath string, source string, destination string) (
 	} else {
 		return true, nil
 	}
-}
-
-// ProcessRunning returns the PID of a running process matched by image name
-func ProcessRunning(binaryPath string) (int, error) {
-	procs, err := ps.Processes()
-	if err != nil {
-		return 0, err
-	}
-	basePath := filepath.Base(binaryPath)
-	for _, p := range procs {
-		if p.Executable() == basePath {
-			// TODO: filter also by process arguments, to be accurate about what instance of rclone is actually running
-			return p.Pid(), nil
-		}
-	}
-	return 0, nil
 }
 
 // EnsureRclone will download and extract specified or default version of rclone to current working directory

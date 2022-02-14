@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/cavaliergopher/grab/v3"
+	"github.com/shirou/gopsutil/v3/process"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -78,4 +81,25 @@ func AppendExtension(fileName string) string {
 		ext = ".exe"
 	}
 	return fileName + ext
+}
+
+// ProcessRunning returns the PID of a running process matched by image name and command line
+func IsProcessRunning(binaryPath, cmdLine string) (int, error) {
+	procs, err := process.Processes()
+	if err != nil {
+		return 0, err
+	}
+	command := filepath.Clean(binaryPath)
+	if cmdLine != "" {
+		command += " " + cmdLine
+	}
+	Logger.Debugf("Searching for %s", command)
+	for _, p := range procs {
+		processCmd, _ := p.Cmdline()
+		Logger.Debugf("Process: %s", processCmd)
+		if strings.Contains(processCmd, command) {
+			return int(p.Pid), nil
+		}
+	}
+	return 0, nil
 }

@@ -11,10 +11,9 @@
       "mode": "debug",
       "program": "${file}",
       "args": [
-        "upload",
-        ".",
-        "c:\\temp\\1",
-        "c:\\temp\\2",
+        "sync",
+        "a",
+        "b",
       ]
     }
   ]

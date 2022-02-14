@@ -12,6 +12,8 @@ builds:
     flags:
       - -mod=readonly
     ldflags:
+      - -s
+      - -w
       - -X=dataflows.com/autorclone/internal/pkg/autorclone.version={{.Tag}}
     main: ./cmd/autorclone/main.go
 checksum:
