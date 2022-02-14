@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"dataflows.com/autorclone/internal/pkg/autorclone"
+	"dataflows.com/autorclone/internal/pkg/utils"
 	cli "github.com/alecthomas/kong"
 	log "github.com/sirupsen/logrus"
 )
@@ -17,6 +18,8 @@ func main() {
 	// TODO improve capturing of stdout/stderr to logger because now is not working. Perhaps overwrite os.Stderr ?
 	w := io.MultiWriter(buf, os.Stderr)
 	logger.SetOutput(w)
+	utils.InitUtils(logger)
+
 	ctx := cli.Parse(&autorclone.CLI, cli.Bind(logger), cli.Vars{
 		"defaultLogLevel": log.InfoLevel.String(),
 	})

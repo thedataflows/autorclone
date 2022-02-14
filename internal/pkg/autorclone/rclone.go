@@ -2,40 +2,52 @@ package autorclone
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
+	"dataflows.com/autorclone/internal/pkg/utils"
 	"github.com/go-cmd/cmd"
 	ps "github.com/mitchellh/go-ps"
-	log "github.com/sirupsen/logrus"
 )
 
 // RunBatchRclone attempts to execute rclone in batch mode
-func RunBatchRclone(u *SourceDestT, logger *log.Logger) error {
+func RunBatchRclone(u *SourceDestT) error {
 	failedTasks := 0
 	for _, dest := range u.Destinations {
+		// Check if rclone binary exists
+		rclonePath, errLookup := exec.LookPath(CLI.RclonePath)
+		if errLookup != nil {
+			Logger.Errorf("Rclone binary '%s' does not exist, trying to download release %s", CLI.RclonePath, CLI.RcloneVersion)
+			errEnsureRclone := EnsureRclone()
+			if errEnsureRclone != nil {
+				return errEnsureRclone
+			}
+			// on Windows will look for any of {".com", ".exe", ".bat", ".cmd"}
+			rclonePath, errLookup = exec.LookPath("./rclone")
+			if errLookup != nil {
+				return errLookup
+			}
+		}
 		// TODO: improve this, perhaps paralelize?
-		success, err := RunIndividualRclone(u.Source, dest, logger)
+		success, err := RunIndividualRclone(rclonePath, u.Source, dest)
 		if !success {
 			failedTasks++
-			logger.Errorf("Failed to sync '%s' to '%s' because %s\n", u.Source, dest, err)
+			Logger.Errorf("Failed to sync '%s' to '%s' because %s\n", u.Source, dest, err)
 		}
 	}
-	logger.Infof("Finished. %v tasks successful. %v tasks failed.", len(u.Destinations)-failedTasks, failedTasks)
+	Logger.Infof("Finished. %v tasks successful. %v tasks failed.", len(u.Destinations)-failedTasks, failedTasks)
 	return nil
 }
 
 // RunIndividualRclone attempts to execute an instance of rclone
-func RunIndividualRclone(source string, destination string, logger *log.Logger) (bool, error) {
-	// Check if rclone binary exists
-	rclonePath, errLookup := exec.LookPath(CLI.RclonePath)
-	if errLookup != nil {
-		return false, fmt.Errorf("rclone binary '%s' does not exist", CLI.RclonePath)
-	}
+func RunIndividualRclone(rclonePath string, source string, destination string) (bool, error) {
 	// Check if rclone is already running
-	pid, errProcRunning := ProcessRunning(rclonePath, logger)
+	pid, errProcRunning := ProcessRunning(rclonePath)
 	if errProcRunning != nil {
 		return false, errProcRunning
 	}
@@ -54,7 +66,7 @@ func RunIndividualRclone(source string, destination string, logger *log.Logger) 
 		Buffered:  false,
 		Streaming: true,
 	}, rclonePath, args...)
-	logger.Infof("COMMAND: %s %s", rcloneCmd.Name, strings.Join(rcloneCmd.Args, " "))
+	Logger.Infof("COMMAND: %s %s", rcloneCmd.Name, strings.Join(rcloneCmd.Args, " "))
 	// Print STDOUT and STDERR lines streaming from Cmd
 	doneChan := make(chan struct{})
 	go func() {
@@ -68,13 +80,13 @@ func RunIndividualRclone(source string, destination string, logger *log.Logger) 
 					rcloneCmd.Stdout = nil
 					continue
 				}
-				logger.Println(line)
+				Logger.Println(line)
 			case line, open := <-rcloneCmd.Stderr:
 				if !open {
 					rcloneCmd.Stderr = nil
 					continue
 				}
-				logger.Println(line)
+				Logger.Println(line)
 			}
 		}
 	}()
@@ -82,7 +94,7 @@ func RunIndividualRclone(source string, destination string, logger *log.Logger) 
 	go func() {
 		<-time.After(CLI.JobTimeout)
 		rcloneCmd.Stop()
-		logger.Errorf("Timeout running job after %v", CLI.JobTimeout)
+		Logger.Errorf("Timeout running job after %v", CLI.JobTimeout)
 	}()
 
 	// Run and wait for Cmd to return, discard Status
@@ -96,7 +108,7 @@ func RunIndividualRclone(source string, destination string, logger *log.Logger) 
 }
 
 // ProcessRunning returns the PID of a running process matched by image name
-func ProcessRunning(binaryPath string, logger *log.Logger) (int, error) {
+func ProcessRunning(binaryPath string) (int, error) {
 	procs, err := ps.Processes()
 	if err != nil {
 		return 0, err
@@ -109,4 +121,26 @@ func ProcessRunning(binaryPath string, logger *log.Logger) (int, error) {
 		}
 	}
 	return 0, nil
+}
+
+// EnsureRclone will download and extract specified or default version of rclone to current working directory
+func EnsureRclone() error {
+	fileUrl := fmt.Sprintf("https://github.com/rclone/rclone/releases/download/%s/rclone-%s-%s-%s.zip", CLI.RcloneVersion, CLI.RcloneVersion, runtime.GOOS, runtime.GOARCH)
+	errDownload := utils.DownloadFile(".", fileUrl)
+	if errDownload != nil {
+		return errDownload
+	}
+	extractedFiles, errDecompress := utils.DecompressFiles(path.Base(fileUrl), "", []string{
+		fmt.Sprintf("rclone-%s-%s-%s/%s", CLI.RcloneVersion, runtime.GOOS, runtime.GOARCH, utils.AppendExtension("rclone")),
+	}, true)
+	if errDecompress != nil {
+		return errDecompress
+	}
+	for _, f := range extractedFiles {
+		Logger.Infof("Extracted %s", f)
+		if path.Base(f) == utils.AppendExtension("rclone") {
+			os.Chmod(path.Base(f), 0755)
+		}
+	}
+	return nil
 }
