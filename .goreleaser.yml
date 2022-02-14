@@ -12,7 +12,7 @@ builds:
     flags:
       - -mod=readonly
     ldflags:
-      - -X=main.version={{.Tag}}
+      - -X=dataflows.com/autorclone/internal/pkg/autorclone.version={{.Tag}}
     main: ./cmd/autorclone/main.go
 checksum:
   name_template: 'sha256sums.txt'
