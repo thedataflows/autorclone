@@ -18,32 +18,36 @@ Requires rclone to be installed and present in the path or can be manually speci
 `autorclone -h`
 
 ```ini
-Usage: autorclone <command>
+Usage: autorclone.exe <command>
 
 Flags:
   -h, --help                    Show context-sensitive help.
       --log-level=info          Set log level to one of: panic, fatal, error,
                                 warn, info, debug, trace
-      --rclone-path="rclone"    Path to rclone binary, if empty will use rclone
-                                from PATH env
-      --rclone-sync-args="sync -v --min-size 0.001 --multi-thread-streams 0 --retries 1 --human-readable --track-renames --links --log-format shortfile"
+      --rclone-path="rclone"    Path to rclone binary, by default will try
+                                rclone from PATH env
+      --rclone-version="v1.57.0"
+                                Rclone release to be downloaded if not in PATH
+      --rclone-sync-args="sync -v --min-size 0.001 --multi-thread-streams 0 --retries 1 --human-readable --track-renames --links --ignore-errors --log-format shortfile"
                                 Rclone default sync arguments
-                                ($AUTO_RCLONE_SYNC_ARGS)
-      --backup-suffix="rclonebak"
-                                Backs up files with specified .suffix before
-                                deleting or replacing them. Existing backups
-                                will be overwritten. Set to empty to disable
-                                backup
+                                ($AUTORCLONE_SYNC_ARGS)
 
 Commands:
   sync <source> <destination1 [destination2] [...]> ...
     Synchronize source to rclone destination(s). Use 'rclone config show' to
     list them.
 
+  run
+    Manually run predefined sync jobs. Without any argument, will run all jobs
+    in the predefined job definition file
+
   daemon
     Run as a background program, executing schelduled jobs
 
-Run "autorclone <command> --help" for more information on a command.
+  version
+    Show version and exit
+
+Run "autorclone.exe <command> --help" for more information on a command.
 ```
 
 ## Tips

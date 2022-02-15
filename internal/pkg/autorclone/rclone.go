@@ -14,9 +14,9 @@ import (
 )
 
 // RunBatchRclone attempts to execute rclone in batch mode
-func RunBatchRclone(u *SourceDestT) error {
-	failedTasks := 0
-	for _, dest := range u.Destinations {
+func RunBatchRclone(sync *SyncT) error {
+	failedRuns := 0
+	for _, dest := range sync.Destinations {
 		// Check if rclone binary exists
 		rclonePath, errLookup := exec.LookPath(CLI.RclonePath)
 		if errLookup != nil {
@@ -32,22 +32,22 @@ func RunBatchRclone(u *SourceDestT) error {
 			}
 		}
 		// TODO: improve this, perhaps paralelize?
-		success, err := RunIndividualRclone(rclonePath, u.Source, dest)
+		success, err := RunIndividualRclone(rclonePath, sync.Source, dest, sync)
 		if !success {
-			failedTasks++
-			Logger.Errorf("Failed to sync '%s' to '%s' because %s\n", u.Source, dest, err)
+			failedRuns++
+			Logger.Errorf("Failed to sync '%s' to '%s' because %s\n", sync.Source, dest, err)
 		}
 	}
-	Logger.Infof("Finished. %v tasks successful. %v tasks failed.", len(u.Destinations)-failedTasks, failedTasks)
+	Logger.Infof("Finished. %v rclone runs successful and %v failed.", len(sync.Destinations)-failedRuns, failedRuns)
 	return nil
 }
 
 // RunIndividualRclone attempts to execute an instance of rclone
-func RunIndividualRclone(rclonePath string, source string, destination string) (bool, error) {
+func RunIndividualRclone(rclonePath, source, destination string, sync *SyncT) (bool, error) {
 	// Setup arguments
 	args := strings.Split(CLI.RcloneSyncArgs, " ")
-	if CLI.BackupSuffix != "" {
-		args = append(args, "--suffix", "."+CLI.BackupSuffix, "--exclude", "*."+CLI.BackupSuffix)
+	if sync.BackupSuffix != "" {
+		args = append(args, "--suffix", "."+sync.BackupSuffix, "--exclude", "*."+sync.BackupSuffix)
 	}
 	args = append(args, source)
 	args = append(args, destination)
@@ -91,9 +91,9 @@ func RunIndividualRclone(rclonePath string, source string, destination string) (
 	}()
 	// Stop command after specified timeout
 	go func() {
-		<-time.After(CLI.JobTimeout)
+		<-time.After(sync.Timeout)
 		rcloneCmd.Stop()
-		Logger.Errorf("Timeout running job after %v", CLI.JobTimeout)
+		Logger.Errorf("Timeout running job after %v", sync.Timeout)
 	}()
 
 	// Run and wait for Cmd to return, discard Status

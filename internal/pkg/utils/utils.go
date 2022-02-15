@@ -93,10 +93,8 @@ func IsProcessRunning(binaryPath, cmdLine string) (int, error) {
 	if cmdLine != "" {
 		command += " " + cmdLine
 	}
-	Logger.Debugf("Searching for %s", command)
 	for _, p := range procs {
 		processCmd, _ := p.Cmdline()
-		Logger.Debugf("Process: %s", processCmd)
 		if strings.Contains(processCmd, command) {
 			return int(p.Pid), nil
 		}
