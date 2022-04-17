@@ -18,7 +18,7 @@ Requires rclone to be installed and present in the path or can be manually speci
 `autorclone -h`
 
 ```ini
-Usage: autorclone.exe <command>
+Usage: autorclone <command>
 
 Flags:
   -h, --help                    Show context-sensitive help.
@@ -47,7 +47,7 @@ Commands:
   version
     Show version and exit
 
-Run "autorclone.exe <command> --help" for more information on a command.
+Run "autorclone <command> --help" for more information on a command.
 ```
 
 ## Tips
