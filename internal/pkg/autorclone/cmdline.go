@@ -29,7 +29,7 @@ func (s *SyncT) Run(logger *log.Logger) error {
 type RunT struct {
 	Jobs               []string      `optional:"" help:"Run just this list of defined job names, either comma separated or repeating this flag"`
 	List               bool          `optional:"" help:"List current jobs from jobs definition file"`
-	Timeout            time.Duration `help:"Job timeout. Will terminate job after expired time" default:"10m"`
+	Timeout            time.Duration `help:"Job timeout. Will terminate job after expired time" default:"30m"`
 	JobsDefinitionFile string        `help:"Jobs definition yaml file" env:"AUTORCLONE_JOBS_FILE" default:"${defaultJobsDefinitionFile}"`
 	jobsDefinition     *JobsDefinitionT
 }
