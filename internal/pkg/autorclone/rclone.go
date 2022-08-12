@@ -79,13 +79,13 @@ func RunIndividualRclone(rclonePath, source, destination string, sync *SyncT) (b
 					rcloneCmd.Stdout = nil
 					continue
 				}
-				Logger.Println(line)
+				Logger.Printf("%s > %s\n", destination, line)
 			case line, open := <-rcloneCmd.Stderr:
 				if !open {
 					rcloneCmd.Stderr = nil
 					continue
 				}
-				Logger.Println(line)
+				Logger.Printf("%s > %s\n", destination, line)
 			}
 		}
 	}()

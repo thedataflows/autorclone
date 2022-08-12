@@ -76,7 +76,7 @@ var CLI struct {
 	LogLevel log.Level `help:"Set log level to one of: panic, fatal, error, warn, info, debug, trace" default:"${defaultLogLevel}"`
 
 	RclonePath     string `optional:"" help:"Path to rclone binary, by default will try rclone from PATH env" default:"rclone"`
-	RcloneVersion  string `optional:"" help:"Rclone release to be downloaded if not in PATH" default:"v1.58.0"`
+	RcloneVersion  string `optional:"" help:"Rclone release to be downloaded if not in PATH" default:"v1.59.1"`
 	RcloneSyncArgs string `optional:"" help:"Rclone default sync arguments" env:"AUTORCLONE_SYNC_ARGS" default:"sync -v --min-size 0.001 --multi-thread-streams 0 --retries 1 --human-readable --track-renames --links --ignore-errors --log-format shortfile"`
 
 	Sync SyncT `cmd:"" help:"Synchronize source to rclone destination(s). Use 'rclone config show' to list them."`
